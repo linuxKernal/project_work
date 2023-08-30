@@ -62,12 +62,10 @@ try:
 
 
 
-    # Create the cyber data.
     vocab = list(set([w for text in train_data.keys() for w in text.split(' ')]))
     vocab_size = len(vocab)
     print('[SUCCESS] the data accuracy finished')
 
-    # Assign indices to each word.
     word_to_idx = { w: i for i, w in enumerate(vocab) }
     idx_to_word = { i: w for i, w in enumerate(vocab) }
 
@@ -80,10 +78,8 @@ try:
         return inputs
 
     def softmax(xs):
-    # Applies the Softmax Function to the input array.
         return np.exp(xs) / sum(np.exp(xs))
 
-    # Initialize our RNN!
     rnn = RNN(vocab_size, 2)
 
     d_L_d_y = []
@@ -100,26 +96,21 @@ try:
             inputs = createInputs(x)
             target = int(y)
 
-            # Forward
             out, _ = rnn.forward(inputs)
             probs = softmax(out)
 
-            # Calculate loss / accuracy
             loss -= np.log(probs[target])
             num_correct += int(np.argmax(probs) == target)
 
             if backprop:
-            # Build dL/dy
                 d_L_d_y = probs
             d_L_d_y[target] -= 1
 
-            # Backward
             rnn.backprop(d_L_d_y)
 
         return loss / len(data), num_correct / len(data)
 
 
-    # Training loop
     for epoch in range(1000):
         train_loss, train_acc = processData(train_data)
 
@@ -139,34 +130,33 @@ datasets = pd.read_csv('simple.csv')
 X = datasets.iloc[:, [2,3]].values
 Y = datasets.iloc[:, 4].values
 
-# Splitting the dataset into the Training set and Test set
 
 from sklearn.model_selection import train_test_split
 X_Train, X_Test, Y_Train, Y_Test = train_test_split(X, Y, test_size = 0.25, random_state = 0)
 
-# Feature Scaling
+
 
 from sklearn.preprocessing import StandardScaler
 sc_X = StandardScaler()
 X_Train = sc_X.fit_transform(X_Train)
 X_Test = sc_X.transform(X_Test)
 
-# Fitting the classifier into the Training set
+
 
 from sklearn.ensemble import RandomForestClassifier
 classifier = RandomForestClassifier(n_estimators = 200, criterion = 'entropy', random_state = 0)
 classifier.fit(X_Train,Y_Train)
 
-# Predicting the test set results
+
 
 Y_Pred = classifier.predict(X_Test)
 
-# Making the Confusion Matrix 
+
 
 from sklearn.metrics import confusion_matrix
 cm = confusion_matrix(Y_Test, Y_Pred)
 
-# Visualising the Training set results
+
 
 from matplotlib.colors import ListedColormap
 X_Set, Y_Set = X_Train, Y_Train
@@ -192,61 +182,48 @@ from keras.layers import Dropout
 from keras.layers import LSTM
 from keras.utils import to_categorical
 
-#Read the data, turn it into lower case
+
 data = open("trained-net.dataset.csv").readlines()[-10:]
 
 data = "".join(data)
-#This get the set of characters used in the data and sorts them
+
 chars = sorted(list(set(data)))
-#Total number of characters used in the data
+
 totalChars = len(data)
-#Number of unique chars
+
 numberOfUniqueChars = len(chars)
 
-#This allows for characters to be represented by numbers
+
 CharsForids = {char:Id for Id, char in enumerate(chars)}
 
-#This is the opposite to the above
+
 idsForChars = {Id:char for Id, char in enumerate(chars)}
 
-#How many timesteps e.g how many characters we want to process in one go
 numberOfCharsToLearn = 100
 
-#Since our timestep sequence represetns a process for every 100 chars we omit
-#the first 100 chars so the loop runs a 100 less or there will be index out of
-#range
+
 counter = totalChars - numberOfCharsToLearn
 
-#Inpput data
+
 charX = []
-#output data
+
 y = []
-#This loops through all the characters in the data skipping the first 100
+
 optimise(3)
 for i in range(0, counter, 1):
-    #This one goes from 0-100 so it gets 100 values starting from 0 and stops
-    #just before the 100th value
+   
     theInputChars = data[i:i+numberOfCharsToLearn]
-    #With no : you start with 0, and so you get the actual 100th value
-    #Essentially, the output Chars is the next char in line for those 100 chars
-    #in X
+   
     theOutputChars = data[i + numberOfCharsToLearn]
-    #Appends every 100 chars ids as a list into X
     charX.append([CharsForids[char] for char in theInputChars])
-    #For every 100 values there is one y value which is the output
     y.append(CharsForids[theOutputChars])
     if i == 15:break
     optimise(1)
 
-#Len charX represents how many of those time steps we have
-#Our features are set to 1 because in the output we are only predicting 1 char
-#Finally numberOfCharsToLearn is how many character we process
+
 X = np.reshape(charX, (len(charX), numberOfCharsToLearn, 1))
 
-#This is done for normalization
+
 X = X/float(numberOfUniqueChars)
 
-#This sets it up for us so we can have a categorical(#feature) output format
 y = to_categorical(y)
-# print(y)
-
